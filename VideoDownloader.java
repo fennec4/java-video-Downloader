@@ -7,15 +7,15 @@ import java.util.concurrent.TimeUnit;
 
 public class VideoDownloader {
     
-    // Répertoire de téléchargement par défaut
+    // Default download directory
     private static final String DOWNLOAD_DIR = System.getProperty("user.home") + "/Downloads/VideoDownloader/";
     
-    // Chemins vers les binaires locaux (à côté du .jar)
+    // Paths to local binaries
     private static final String LOCAL_BINARIES_DIR = "./bin/";
     private static final String YT_DLP_PATH = getYtDlpPath();
     private static final String FFMPEG_PATH = getFfmpegPath();
     
-    // Détection automatique du système d'exploitation
+    // Automatic detection of operating system
     private static String getYtDlpPath() {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
@@ -34,7 +34,7 @@ public class VideoDownloader {
         }
     }
     
-    // Enum pour les formats supportés
+    // Enum for supported formats
     public enum Format {
         MP3("bestaudio[ext=m4a]/bestaudio/best[ext=m4a]", "mp3"),
         MP4_BEST("bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best", "mp4"),
@@ -57,42 +57,38 @@ public class VideoDownloader {
         Scanner scanner = new Scanner(System.in);
         
         try {
-            // Vérifier si les binaires locaux sont disponibles
+            // Check if local binaries are available
             if (!downloader.areLocalBinariesAvailable()) {
-                System.out.println("❌ Binaires non trouvés dans le dossier: " + LOCAL_BINARIES_DIR);
-                System.out.println("📁 Structure requise:");
-                System.out.println("   📂 bin/");
-                System.out.println("      📄 yt-dlp.exe (Windows) ou yt-dlp (Linux/Mac)");
-                System.out.println("      📄 ffmpeg.exe (Windows) ou ffmpeg (Linux/Mac)");
+                System.out.println("Binaries not found in folder: " + LOCAL_BINARIES_DIR);
+                System.out.println("Required structure:");
+                System.out.println("    bin/");
+                System.out.println("       yt-dlp.exe (Windows) or yt-dlp (Linux/Mac)");
+                System.out.println("       ffmpeg.exe (Windows) or ffmpeg (Linux/Mac)");
                 return;
             }
             
-            // Créer le répertoire de téléchargement
+            // Create the download directory
             downloader.createDownloadDirectory();
-            
-            System.out.println("=== TÉLÉCHARGEUR DE VIDÉOS (MODE LOCAL) ===");
-            System.out.println("✅ yt-dlp: " + YT_DLP_PATH);
-            System.out.println("✅ FFmpeg: " + FFMPEG_PATH);
-            System.out.println("📁 Téléchargements: " + DOWNLOAD_DIR);
-            
+           
             while (true) {
-                System.out.println("\n=== TÉLÉCHARGEUR VIDÉO SIMPLE ===");
-                System.out.println("1. Télécharger en MP3 (audio haute qualité)");
-                System.out.println("2. Télécharger en MP4 (MEILLEURE RÉSOLUTION AUTO)");
-                System.out.println("3. Télécharger en MP4 720p (résolution moyenne, rapide)");
-                System.out.println("4. Quitter");               
-                System.out.print("Votre choix: ");
+                System.out.println("\n=== SIMPLE VIDEO DOWNLOADER ===");               
+                System.out.println(" Downloads: " + DOWNLOAD_DIR+"\n");
+                System.out.println("1. Download MP3");
+                System.out.println("2. Download MP4 (BEST RESOLUTION)");
+                System.out.println("3. Download MP4 (720p)");
+                System.out.println("4. Quit");               
+                System.out.print("Your choice: ");
                 
                 int choice = scanner.nextInt();
                 scanner.nextLine();
                 
                 if (choice == 4) break;
                 
-                System.out.print("Entrez l'URL de la vidéo: ");
+                System.out.print("Enter the video URL: ");
                 String url = scanner.nextLine().trim();
                 
                 if (url.isEmpty()) {
-                    System.out.println("URL invalide!");
+                    System.out.println("Invalid URL!");
                     continue;
                 }
                 
@@ -107,12 +103,12 @@ public class VideoDownloader {
                         downloader.downloadVideo(url, Format.MP4_720P);
                         break;                    
                     default:
-                        System.out.println("Choix invalide!");
+                        System.out.println("Invalid choice!");
                 }
             }
             
         } catch (Exception e) {
-            System.err.println("Erreur: " + e.getMessage());
+            System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
         } finally {
             scanner.close();
@@ -124,7 +120,7 @@ public class VideoDownloader {
      */
     public boolean downloadVideo(String url, Format format) {
         try {
-            System.out.println("Démarrage du téléchargement en " + format.name() + "...");
+            System.out.println("Starting the download in " + format.name() + "...");
             
             ProcessBuilder pb = new ProcessBuilder();
             
@@ -137,11 +133,11 @@ public class VideoDownloader {
                     "--format", "bestaudio[ext=m4a]/bestaudio[ext=mp3]/bestaudio",
                     "--output", DOWNLOAD_DIR + "%(title)s.%(ext)s",
                     "--no-playlist",
-                    "--ffmpeg-location", FFMPEG_PATH, // Spécifier le chemin FFmpeg
+                    "--ffmpeg-location", FFMPEG_PATH, // Specify FFmpeg path
                     url
                 );
             } else if (format == Format.MP4_720P) {
-                System.out.println("🔍 Téléchargement en qualité 720p optimisée...");
+                System.out.println("Download in 720p quality...");
                 pb.command(
                     YT_DLP_PATH,
                     "--format", format.getYtDlpFormat(),
@@ -152,11 +148,11 @@ public class VideoDownloader {
                     "--prefer-free-formats", "false",
                     "--embed-thumbnail",
                     "--add-metadata",
-                    "--ffmpeg-location", FFMPEG_PATH, // Spécifier le chemin FFmpeg
+                    "--ffmpeg-location", FFMPEG_PATH, // Specify FFmpeg path
                     url
                 );
             } else {
-                System.out.println("🔍 Recherche de la meilleure qualité disponible...");
+                System.out.println(" Seeking the best quality available...");
                 pb.command(
                     YT_DLP_PATH,
                     "--format", format.getYtDlpFormat(),
@@ -167,7 +163,7 @@ public class VideoDownloader {
                     "--prefer-free-formats", "false",
                     "--embed-thumbnail",
                     "--add-metadata",
-                    "--ffmpeg-location", FFMPEG_PATH, // Spécifier le chemin FFmpeg
+                    "--ffmpeg-location", FFMPEG_PATH, // Specify FFmpeg path
                     url
                 );
             }
@@ -190,27 +186,27 @@ public class VideoDownloader {
             
             if (!finished) {
                 process.destroyForcibly();
-                System.err.println("Le téléchargement a pris trop de temps et a été interrompu.");
+                System.err.println("The download took too long and was interrupted.");
                 return false;
             }
             
             int exitCode = process.exitValue();
-            if (exitCode == 0) {
-                System.out.println("✅ Téléchargement réussi!");
+            if (exitCode == 0 || exitCode == 1) {
+                System.out.println("Download successful!");
                 return true;
             } else {
-                System.err.println("❌ Échec du téléchargement (code: " + exitCode + ")");
+                System.err.println("Download failed (code: " + exitCode + ")");
                 return false;
             }
             
         } catch (Exception e) {
-            System.err.println("Erreur lors du téléchargement: " + e.getMessage());
+            System.err.println("Error while downloading: " + e.getMessage());
             return false;
         }
     }
     
    /**
-     * Vérifie si les binaires locaux sont disponibles
+     * Checks if local binaries are available
      */
     private boolean areLocalBinariesAvailable() {
         File ytDlpFile = new File(YT_DLP_PATH);
@@ -220,27 +216,27 @@ public class VideoDownloader {
         boolean ffmpegExists = ffmpegFile.exists() && ffmpegFile.canExecute();
         
         if (!ytDlpExists) {
-            System.err.println("❌ yt-dlp non trouvé: " + YT_DLP_PATH);
+            System.err.println("yt-dlp not found: " + YT_DLP_PATH);
         }
         if (!ffmpegExists) {
-            System.err.println("❌ FFmpeg non trouvé: " + FFMPEG_PATH);
+            System.err.println("FFmpeg not found: " + FFMPEG_PATH);
         }
         
         return ytDlpExists && ffmpegExists;
     }
     
     /**
-     * Crée le répertoire de téléchargement s'il n'existe pas
+     * Creates the download directory if it does not exist
      */
     private void createDownloadDirectory() {
         try {
             Path downloadPath = Paths.get(DOWNLOAD_DIR);
             if (!Files.exists(downloadPath)) {
                 Files.createDirectories(downloadPath);
-                System.out.println("Répertoire créé: " + DOWNLOAD_DIR);
+                System.out.println("Directory created: " + DOWNLOAD_DIR);
             }
         } catch (Exception e) {
-            System.err.println("Impossible de créer le répertoire: " + e.getMessage());
+            System.err.println("Unable to create directory: " + e.getMessage());
         }
     }
 }
